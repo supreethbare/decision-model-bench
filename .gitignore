@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Upstream dataset copies - fetched by bench/fetch_raw.sh, not redistributed here
+bench/raw/
+
+# Local model checkouts / weights
+Open-Jev/
+*.cact
+*.safetensors

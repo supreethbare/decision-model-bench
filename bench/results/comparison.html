@@ -1,0 +1,292 @@
+<title>Decision Model Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f7f8;
+  --surface: #fcfcfb;
+  --line: #e2e4e6;
+  --grid: #eceef0;
+  --text: #121416;
+  --text-2: #4d5257;
+  --text-3: #767b80;
+  --accent: #2a78d6;
+  --s1: #2a78d6;   /* Jev */
+  --s2: #eb6834;   /* Open-Jev */
+  --s3: #1baf7a;   /* Needle */
+  --good-bg: #e6f4ec;
+  --good: #1d6b3f;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121314;
+    --surface: #1a1a19;
+    --line: #2e3033;
+    --grid: #26282a;
+    --text: #f3f4f5;
+    --text-2: #c3c6c9;
+    --text-3: #92969a;
+    --accent: #3987e5;
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --good-bg: #16301f;
+    --good: #7fd3a0;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121314;
+  --surface: #1a1a19;
+  --line: #2e3033;
+  --grid: #26282a;
+  --text: #f3f4f5;
+  --text-2: #c3c6c9;
+  --text-3: #92969a;
+  --accent: #3987e5;
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --good-bg: #16301f;
+  --good: #7fd3a0;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 32px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 600; margin: 0; letter-spacing: -.01em; text-wrap: balance; }
+h2 { font-size: 17px; font-weight: 600; margin: 0; }
+.lede { color: var(--text-2); max-width: 68ch; margin: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 12.5px; color: var(--text-3); }
+
+.findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.finding .who { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.finding p { margin: 0; color: var(--text-2); font-size: 14px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 16px; }
+.controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 3px; }
+.seg button { font: 500 13px var(--font); color: var(--text-2); background: none; border: 0; border-radius: 6px; padding: 6px 11px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.metric-note { font-size: 13.5px; color: var(--text-2); margin: 0; }
+.metric-note b { color: var(--text); font-weight: 600; }
+
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--font); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgb(0 0 0 / .12); min-width: 170px; }
+.tip .t { font-weight: 600; margin-bottom: 2px; }
+.tip .r { display: flex; justify-content: space-between; gap: 14px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2), td.note, th.note { text-align: left; }
+th { font-weight: 500; color: var(--text-3); font-size: 12px; }
+td.note { white-space: normal; color: var(--text-2); min-width: 240px; }
+td.best { background: var(--good-bg); color: var(--good); font-weight: 600; }
+tr.group td { border-top: 1px solid var(--line); }
+.model-cell { display: inline-flex; align-items: center; gap: 7px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px 28px; }
+.notes div { display: grid; gap: 4px; }
+.notes h3 { font-size: 14px; margin: 0; font-weight: 600; }
+.notes p, .notes li { margin: 0; color: var(--text-2); font-size: 13.5px; }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+code { font-family: var(--mono); font-size: .92em; }
+@media (max-width: 560px) { .panel { padding: 14px; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Benchmark · 4 enterprise tasks · ~200 cases each</div>
+    <h1>Jev vs Open-Jev vs Needle 3</h1>
+    <p class="lede">The same test cases, taken from public datasets, sent to all three models. Jev runs in TypeSafe's cloud. Open-Jev-2B and Needle 3 run locally on a MacBook Air M4 with 24 GB.</p>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <section class="findings" id="findings"></section>
+
+  <section class="panel" aria-labelledby="chart-h">
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Metric" id="metric-seg"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <h2 id="chart-h" hidden>Results by task</h2>
+    <p class="metric-note" id="metric-note"></p>
+    <div class="chart" id="chart"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="table-h">
+    <h2 id="table-h">All results</h2>
+    <div class="table-wrap"><table id="table"></table></div>
+  </section>
+
+  <section class="panel" aria-labelledby="notes-h">
+    <h2 id="notes-h">What was tested, and the caveats</h2>
+    <div class="notes">
+      <div><h3>Triage · Bitext customer support</h3><p>Pick 1 of 11 support categories for a customer message. 18 per category.</p></div>
+      <div><h3>Intent + out-of-scope · CLINC150</h3><p>Pick 1 of 15 banking intents, or <code>out_of_scope</code>. 150 in-scope cases plus 50 out-of-scope: 25 generic and 25 near-miss credit-card requests.</p></div>
+      <div><h3>Toxicity guardrail · Civil Comments</h3><p>Yes/no: is the comment toxic? 100 toxic and 100 non-toxic, using the standard 0.5 annotator cut-off.</p></div>
+      <div><h3>Tool selection · BFCL v3 “multiple”</h3><p>Pick the right function out of 2–4 candidates. Needle also fills in the arguments, scored against BFCL's accepted answers.</p></div>
+      <div><h3>How to read it</h3><ul>
+        <li><b>Auto @95%</b>: the share of all cases that could be handled with no human, by trusting the most-confident answers first while staying ≥95% correct.</li>
+        <li><b>Calibration error (ECE)</b>: the average gap between a model's stated confidence and how often it's actually right. Lower is better.</li>
+        <li>When Needle declines to answer, that counts as wrong.</li>
+      </ul></div>
+      <div><h3>Caveats</h3><ul>
+        <li>Latency isn't a like-for-like comparison. Jev's time includes the internet round trip. Open-Jev runs on the Mac GPU without the fast code it has on NVIDIA. Needle runs on the CPU.</li>
+        <li>Needle was given each question as a tool to call. Its strength is tool calls and extraction, not judgement.</li>
+        <li>One run of about 200 cases per task: differences of 2–3 points are within noise.</li>
+      </ul></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const DATA = [{"model": "jev", "task": "triage", "n": 198.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.9343434343434344, "macro_f1": 0.9324936479331908, "auto@95": 0.9797979797979798, "ece": 0.03666666666666662, "brier": null, "p50_ms": 151.76793793216348, "p95_ms": 203.82166700437665, "extra": ""}, {"model": "openjev", "task": "triage", "n": 198.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.8838383838383839, "macro_f1": 0.8876891721231345, "auto@95": 0.8838383838383839, "ece": 0.26325660466857315, "brier": null, "p50_ms": 1590.0178330484778, "p95_ms": 1851.754416944459, "extra": ""}, {"model": "needle", "task": "triage", "n": 198.0, "errors": 0.0, "declined": 108.0, "accuracy": 0.2828282828282828, "macro_f1": 0.3748512161620988, "auto@95": 0.010101010101010102, "ece": 0.17981000000000003, "brier": null, "p50_ms": 29.558395966887474, "p95_ms": 50.238416995853186, "extra": ""}, {"model": "jev", "task": "intent_oos", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.91, "macro_f1": 0.9219924812030075, "auto@95": 0.625, "ece": 0.07254999999999998, "brier": null, "p50_ms": 150.74231254402548, "p95_ms": 209.90866608917713, "extra": "out-of-scope recall 0.84, in-scope acc 0.93"}, {"model": "openjev", "task": "intent_oos", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.745, "macro_f1": 0.7394382561801771, "auto@95": 0.435, "ece": 0.2499952162965136, "brier": null, "p50_ms": 2642.292666481808, "p95_ms": 2847.57991717197, "extra": "out-of-scope recall 0.82, in-scope acc 0.72"}, {"model": "needle", "task": "intent_oos", "n": 200.0, "errors": 0.0, "declined": 56.0, "accuracy": 0.2, "macro_f1": 0.2657692334132897, "auto@95": 0.0, "ece": 0.5428111111111111, "brier": null, "p50_ms": 37.18960389960557, "p95_ms": 91.00775001570582, "extra": "out-of-scope recall 0.00, in-scope acc 0.27; acc 0.38 if declines count as out_of_scope"}, {"model": "jev", "task": "toxicity", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.785, "macro_f1": 0.7922705314009661, "auto@95": 0.205, "ece": 0.06865000000000002, "brier": 0.1494485, "p50_ms": 151.41564549412578, "p95_ms": 201.84120815247297, "extra": "toxic precision 0.77, recall 0.82"}, {"model": "openjev", "task": "toxicity", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.585, "macro_f1": 0.3252032520325203, "auto@95": 0.015, "ece": 0.207890144669201, "brier": 0.27325255630996564, "p50_ms": 465.4749169712886, "p95_ms": 1120.0000829994678, "extra": "toxic precision 0.87, recall 0.20"}, {"model": "needle", "task": "toxicity", "n": 200.0, "errors": 0.0, "declined": 76.0, "accuracy": 0.32, "macro_f1": 0.5435897435897435, "auto@95": 0.0, "ece": 0.35927903225806457, "brier": 0.376431119516129, "p50_ms": 47.88943799212575, "p95_ms": 113.99841704405844, "extra": "toxic precision 0.56, recall 0.53"}, {"model": "jev", "task": "tool_select", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.995, "macro_f1": null, "auto@95": 1.0, "ece": 0.005899999999999955, "brier": null, "p50_ms": 147.93108333833516, "p95_ms": 217.06412499770522, "extra": ""}, {"model": "openjev", "task": "tool_select", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.995, "macro_f1": null, "auto@95": 1.0, "ece": 0.07623276809743759, "brier": null, "p50_ms": 1075.8349165553227, "p95_ms": 1768.2171249762177, "extra": ""}, {"model": "needle", "task": "tool_select", "n": 200.0, "errors": 0.0, "declined": 0.0, "accuracy": 0.95, "macro_f1": null, "auto@95": 1.0, "ece": 0.07766900000000004, "brier": null, "p50_ms": 163.5988955385983, "p95_ms": 276.62525000050664, "extra": "function + arguments correct 0.61"}];
+const META = {"Run": "2026-09-23", "Cases": "798 per model", "Jev": "jev-1.13.0", "Open-Jev": "2B \u00b7 Qwen3.5-2B + LoRA", "Needle": "cactus-needle 3.0.4"};
+
+const MODELS = [
+  { id: "jev", name: "Jev", color: "var(--s1)", where: "TypeSafe API" },
+  { id: "openjev", name: "Open-Jev-2B", color: "var(--s2)", where: "local · Mac GPU" },
+  { id: "needle", name: "Needle 3", color: "var(--s3)", where: "local · CPU" },
+];
+const TASKS = [
+  { id: "triage", name: "Ticket triage" },
+  { id: "intent_oos", name: "Intent + out-of-scope" },
+  { id: "toxicity", name: "Toxicity guardrail" },
+  { id: "tool_select", name: "Tool selection" },
+];
+const METRICS = [
+  { id: "accuracy", label: "Accuracy", pct: true, max: 1, better: "high",
+    note: "<b>Accuracy</b>: share of cases answered correctly. Declined answers count as wrong." },
+  { id: "auto@95", label: "Auto @95%", pct: true, max: 1, better: "high",
+    note: "<b>Automation at 95% precision</b>: share of all cases that could run with no human, handling the most-confident answers first while those stay ≥95% correct." },
+  { id: "macro_f1", label: "Macro-F1", pct: false, max: 1, better: "high",
+    note: "<b>Macro-F1</b>: F1 averaged across classes, so rare categories count as much as common ones. For toxicity, F1 of the toxic class. Not scored for tool selection." },
+  { id: "ece", label: "Calibration error", pct: false, max: null, better: "low",
+    note: "<b>Expected calibration error</b>: how far stated confidence is from actual accuracy. <b>Lower is better</b>. 0 means that when it says 80%, it's right 80% of the time." },
+  { id: "p50_ms", label: "Latency p50", pct: false, max: null, better: "low", unit: " ms",
+    note: "<b>Median time per request</b> in milliseconds. <b>Lower is better</b>. Not a like-for-like comparison: Jev includes the network round trip; the local models don't." },
+];
+
+const $ = (id) => document.getElementById(id);
+const get = (m, t) => DATA.find((r) => r.model === m && r.task === t);
+const fmt = (v, metric) => v == null ? "–" : metric.pct ? `${(v * 100).toFixed(1)}%`
+  : metric.unit ? `${Math.round(v).toLocaleString()}${metric.unit}` : v.toFixed(3);
+
+$("meta").innerHTML = Object.entries(META).map(([k, v]) => `<span>${k}: ${v}</span>`).join("");
+$("legend").innerHTML = MODELS.map((m) => `<span><i class="sw" style="background:${m.color}"></i>${m.name} <span style="color:var(--text-3)">${m.where}</span></span>`).join("");
+
+// ---- findings, computed from the data ----
+(function findings() {
+  const avg = (m, k) => { const v = TASKS.map((t) => get(m, t.id)?.[k]).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const best = (tid) => MODELS.map((m) => [m, get(m.id, tid)?.accuracy ?? -1]).sort((a, b) => b[1] - a[1])[0][0];
+  const cards = MODELS.map((m) => {
+    const wins = TASKS.filter((t) => best(t.id).id === m.id).map((t) => t.name);
+    const acc = avg(m.id, "accuracy"), auto = avg(m.id, "auto@95");
+    return `<div class="finding"><div class="who"><i class="sw" style="background:${m.color}"></i>${m.name}</div>
+      <p>Average accuracy <b>${acc == null ? "–" : (acc * 100).toFixed(1) + "%"}</b> · auto @95% <b>${auto == null ? "–" : (auto * 100).toFixed(1) + "%"}</b></p>
+      <p>${wins.length ? "Best on: " + wins.join(", ") : "Not the best on any task"}</p></div>`;
+  });
+  $("findings").innerHTML = cards.join("");
+})();
+
+// ---- chart ----
+let current = METRICS[0];
+$("metric-seg").innerHTML = METRICS.map((m, i) => `<button type="button" id="metric-${i}" aria-pressed="${i === 0}" data-i="${i}">${m.label}</button>`).join("");
+$("metric-seg").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  current = METRICS[+b.dataset.i];
+  [...$("metric-seg").children].forEach((x) => x.setAttribute("aria-pressed", x === b));
+  draw();
+});
+
+function draw() {
+  const el = $("chart");
+  const W = Math.max(320, el.clientWidth);
+  const narrow = W < 560;
+  const labelW = narrow ? 0 : 170, valueW = 64;
+  const barH = 16, gap = 2, groupGap = narrow ? 34 : 22, titleH = narrow ? 20 : 0;
+  const groupH = MODELS.length * barH + (MODELS.length - 1) * gap;
+  const H = TASKS.length * (groupH + groupGap + titleH) + 26;
+  const plotX = labelW, plotW = W - labelW - valueW;
+  const vals = DATA.map((r) => r[current.id]).filter((v) => v != null);
+  const max = current.max ?? niceMax(Math.max(...vals, 0.0001));
+  const x = (v) => plotX + (v / max) * plotW;
+  const ticks = [0, .25, .5, .75, 1].map((f) => f * max);
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${current.label} by task and model">`;
+  ticks.forEach((t) => {
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H - 22}" stroke="var(--grid)" stroke-width="1"/>`;
+    s += `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="var(--text-3)">${fmt(t, current)}</text>`;
+  });
+  let y = 4;
+  TASKS.forEach((t) => {
+    if (narrow) { s += `<text x="0" y="${y + 12}" font-size="13" font-weight="600" fill="var(--text)">${t.name}</text>`; y += titleH; }
+    else s += `<text x="0" y="${y + groupH / 2 + 4}" font-size="13" font-weight="500" fill="var(--text)">${t.name}</text>`;
+    MODELS.forEach((m, i) => {
+      const r = get(m.id, t.id), v = r?.[current.id];
+      const by = y + i * (barH + gap);
+      if (v == null) {
+        s += `<text x="${plotX + 4}" y="${by + barH - 4}" font-size="11.5" fill="var(--text-3)">${r ? "not applicable" : "not run"}</text>`;
+      } else {
+        const w = Math.max(2, x(v) - plotX), rr = Math.min(4, w / 2);
+        s += `<path d="M${plotX},${by} h${w - rr} a${rr},${rr} 0 0 1 ${rr},${rr} v${barH - 2 * rr} a${rr},${rr} 0 0 1 -${rr},${rr} h-${w - rr} z" fill="${m.color}"/>`;
+        s += `<text x="${plotX + w + 6}" y="${by + barH - 4}" font-size="12" fill="var(--text-2)" style="font-variant-numeric:tabular-nums">${fmt(v, current)}</text>`;
+      }
+      s += `<rect x="0" y="${by - 1}" width="${W}" height="${barH + 2}" fill="transparent" data-m="${m.id}" data-t="${t.id}"/>`;
+    });
+    y += groupH + groupGap;
+  });
+  s += `<line x1="${plotX}" x2="${plotX}" y1="0" y2="${H - 22}" stroke="var(--text-3)" stroke-width="1"/></svg><div class="tip" id="tip" hidden></div>`;
+  el.innerHTML = s;
+  $("metric-note").innerHTML = current.note;
+
+  const tip = $("tip");
+  el.querySelectorAll("rect[data-m]").forEach((hit) => {
+    hit.addEventListener("mousemove", (e) => {
+      const r = get(hit.dataset.m, hit.dataset.t); if (!r) return;
+      const m = MODELS.find((q) => q.id === hit.dataset.m), t = TASKS.find((q) => q.id === hit.dataset.t);
+      tip.innerHTML = `<div class="t">${m.name} · ${t.name}</div>` + METRICS.map((mt) =>
+        `<div class="r"><span>${mt.label}</span><span>${fmt(r[mt.id], mt)}</span></div>`).join("") +
+        (r.declined ? `<div class="r"><span>Declined</span><span>${r.declined}</span></div>` : "");
+      tip.hidden = false;
+      const box = el.getBoundingClientRect();
+      let left = e.clientX - box.left + 14; if (left + 200 > box.width) left = e.clientX - box.left - 210;
+      tip.style.left = Math.max(0, left) + "px"; tip.style.top = (e.clientY - box.top + 12) + "px";
+    });
+    hit.addEventListener("mouseleave", () => { tip.hidden = true; });
+  });
+}
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5, 10].map((k) => k * p).find((k) => k >= v); }
+new ResizeObserver(() => draw()).observe($("chart"));
+draw();
+
+// ---- table ----
+(function table() {
+  const cols = METRICS.concat([{ id: "p95_ms", label: "p95", unit: " ms", better: "low" }]);
+  let h = `<thead><tr><th>Task</th><th>Model</th>${cols.map((c) => `<th>${c.label}</th>`).join("")}<th>Declined</th><th class="note">Notes</th></tr></thead><tbody>`;
+  TASKS.forEach((t) => {
+    const rows = MODELS.map((m) => [m, get(m.id, t.id)]).filter(([, r]) => r);
+    const bestOf = (c) => { const v = rows.map(([, r]) => r[c.id]).filter((x) => x != null); if (v.length < 2) return null; return c.better === "low" ? Math.min(...v) : Math.max(...v); };
+    rows.forEach(([m, r], i) => {
+      h += `<tr class="${i === 0 ? "group" : ""}"><td>${i === 0 ? t.name : ""}</td><td><span class="model-cell"><i class="sw" style="background:${m.color}"></i>${m.name}</span></td>`;
+      cols.forEach((c) => { const b = bestOf(c); h += `<td class="${r[c.id] != null && r[c.id] === b ? "best" : ""}">${fmt(r[c.id], c)}</td>`; });
+      h += `<td>${r.declined}</td><td class="note">${r.extra || ""}</td></tr>`;
+    });
+  });
+  $("table").innerHTML = h + "</tbody>";
+})();
+</script>

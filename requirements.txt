@@ -1,0 +1,9 @@
+# Benchmark harness
+pyarrow          # reads the public dataset parquet files
+matplotlib       # summary chart (bench/make_blog_charts.py)
+
+# Models under test - install the ones you want to run
+typesafe-sdk     # Jev (cloud API; needs TYPESAFE_API_KEY)
+cactus-needle    # Needle 3 (local, CPU)
+# Open-Jev is run as a separate local server from its own checkout:
+#   https://github.com/Zefan-Cai/Open-Jev  (see README)

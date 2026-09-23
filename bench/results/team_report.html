@@ -1,0 +1,246 @@
+<title>Decision Model Evaluation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f7f8;
+  --paper: #fcfcfb;
+  --line: #e2e4e6;
+  --text: #15181c;
+  --text-2: #4b5157;
+  --text-3: #767b80;
+  --accent: #1f5fae;
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --good-bg: #e6f4ec;
+  --good: #1d6b3f;
+  --warn-bg: #fdf3e1;
+  --warn: #8a5a00;
+  --bad-bg: #fbe9e8;
+  --bad: #a1302f;
+  --callout: #eef3fa;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121314; --paper: #1a1b1c; --line: #2e3033;
+    --text: #f2f3f4; --text-2: #c3c6c9; --text-3: #92969a; --accent: #7fb0ee;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --good-bg: #16301f; --good: #7fd3a0; --warn-bg: #33270f; --warn: #f0c46b;
+    --bad-bg: #3a1a1a; --bad: #f19a99; --callout: #1a2533;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121314; --paper: #1a1b1c; --line: #2e3033;
+  --text: #f2f3f4; --text-2: #c3c6c9; --text-3: #92969a; --accent: #7fb0ee;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+  --good-bg: #16301f; --good: #7fd3a0; --warn-bg: #33270f; --warn: #f0c46b;
+  --bad-bg: #3a1a1a; --bad: #f19a99; --callout: #1a2533;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.6; }
+.page { max-width: 820px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; }
+article { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: clamp(20px, 5vw, 48px); display: grid; gap: 36px; }
+section { display: grid; gap: 14px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+h1 { font-size: clamp(28px, 4.5vw, 38px); line-height: 1.15; font-weight: 600; letter-spacing: -.015em; margin: 6px 0 0; text-wrap: balance; }
+h2 { font-size: 21px; font-weight: 600; margin: 0; letter-spacing: -.005em; text-wrap: balance; }
+h3 { font-size: 16px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.muted { color: var(--text-2); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.byline { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--mono); font-size: 12.5px; color: var(--text-3); margin-top: 10px; }
+
+.tldr { background: var(--callout); border-radius: 8px; padding: 18px 22px; display: grid; gap: 10px; }
+.tldr h2 { font-size: 15px; font-family: var(--mono); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.tldr ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.stat { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; display: grid; gap: 2px; }
+.stat .k { font-size: 12.5px; color: var(--text-3); }
+.stat .v { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.stat .s { font-size: 13px; color: var(--text-2); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+thead th { font-size: 12.5px; font-weight: 500; color: var(--text-3); background: var(--bg); }
+tbody tr:last-child td { border-bottom: 0; }
+td.best { background: var(--good-bg); color: var(--good); font-weight: 600; }
+.caption { font-size: 13px; color: var(--text-3); }
+.sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
+
+.models { display: grid; gap: 12px; }
+.model { border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 8px; }
+.model header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.model h3 { display: flex; align-items: center; }
+.pill { font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; }
+.pill.good { background: var(--good-bg); color: var(--good); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+.model ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; color: var(--text-2); font-size: 15px; }
+.model b { color: var(--text); font-weight: 600; }
+
+ol.steps, ul.plain { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 68ch; }
+ol.steps b, ul.plain b { font-weight: 600; }
+code { font-family: var(--mono); font-size: .88em; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+pre { margin: 0; font-family: var(--mono); font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; line-height: 1.55; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 0; }
+.foot { font-size: 13px; color: var(--text-3); }
+</style>
+
+<div class="page">
+<article>
+
+  <header>
+    <div class="eyebrow">Evaluation report · September 2026</div>
+    <h1>Typed decision models for enterprise workflows: Jev, Open-Jev and Needle 3</h1>
+    <div class="byline"><span>798 test cases per model</span><span>4 use cases</span><span>public datasets</span><span>run 22 Sep 2026</span></div>
+  </header>
+
+  <div class="tldr">
+    <h2>Summary</h2>
+    <ul>
+      <li><b>Jev (TypeSafe) is the clear leader.</b> It was best or tied on all four use cases, averaging 90.6% accuracy. It could automate 70% of cases while keeping the automated answers ≥95% correct, and at ~150 ms per request.</li>
+      <li><b>Jev's confidence scores are reliable</b>: when it says 80%, it's right about 80% of the time. That makes confidence thresholds usable for human-in-the-loop routing. The two open models' scores are much less reliable.</li>
+      <li><b>Open-Jev-2B is a credible self-hosted option for routing tasks</b> (88% on triage, 99.5% on tool selection), but it fell well short on judgement tasks such as toxicity (58.5%).</li>
+      <li><b>Needle 3 isn't suited to classification.</b> It is only competitive at choosing a function to call (95%), which is what it was built for.</li>
+      <li><b>Recommendation:</b> pilot Jev on one routing workflow using our own data, pending a data-governance review. Keep Open-Jev as a self-hosted fallback to evaluate at the larger 9B size.</li>
+    </ul>
+  </div>
+
+  <div class="stats" aria-label="Headline numbers">
+    <div class="stat"><span class="k">Jev · average accuracy</span><span class="v">90.6%</span><span class="s">Open-Jev 80.2% · Needle 43.8%</span></div>
+    <div class="stat"><span class="k">Jev · automatable at 95% precision</span><span class="v">70%</span><span class="s">Open-Jev 58% · Needle 25%</span></div>
+    <div class="stat"><span class="k">Jev · calibration error</span><span class="v">0.006–0.073</span><span class="s">Open-Jev 0.08–0.26 · lower is better</span></div>
+    <div class="stat"><span class="k">Jev · median latency</span><span class="v">~150 ms</span><span class="s">including the network round trip</span></div>
+  </div>
+
+  <section>
+    <h2>Why we ran this</h2>
+    <p class="muted">Jev is a new kind of model that returns <em>typed decisions</em>: a choice from a fixed list, a yes/no probability, or a score. It does this instead of generating free text, so our code can act on the answer directly, with no parsing and no risk of invented output. Before building on it, we wanted to know two things. How accurate and trustworthy is it on the kinds of decisions enterprises automate? And can an open model we host ourselves do the same job?</p>
+  </section>
+
+  <section>
+    <h2>What we tested</h2>
+    <p class="muted">Four common enterprise use cases, each built from a public, labelled dataset. We used a fixed random sample of about 200 cases per use case, balanced across the answer categories. All three models received exactly the same inputs.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Use case</th><th>Dataset</th><th>Decision</th><th>Cases</th></tr></thead>
+      <tbody>
+        <tr><td>Support ticket triage</td><td>Bitext customer support</td><td>Choice, 11 categories</td><td>198</td></tr>
+        <tr><td>Intent + out-of-scope</td><td>CLINC150</td><td>Choice, 15 banking intents + “out of scope”</td><td>200</td></tr>
+        <tr><td>Toxicity guardrail</td><td>Civil Comments (Jigsaw)</td><td>Yes/no</td><td>200</td></tr>
+        <tr><td>Tool selection</td><td>Berkeley Function Calling (BFCL v3)</td><td>Choice of 2–4 functions</td><td>200</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption">The out-of-scope set deliberately includes 25 “near-miss” credit-card requests that a banking assistant should decline, as well as 25 generic off-topic requests.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Model</th><th>Who / what</th><th>Where it ran</th><th>Size</th></tr></thead>
+      <tbody>
+        <tr><td><span class="sw" style="background:var(--s1)"></span>Jev 1.13.0</td><td>TypeSafe, proprietary API</td><td>TypeSafe cloud</td><td>Not published</td></tr>
+        <tr><td><span class="sw" style="background:var(--s2)"></span>Open-Jev-2B</td><td>Open-source copy of the Jev approach (Qwen3.5-2B + adapter)</td><td>MacBook Air M4, 24 GB, GPU</td><td>2.3 B params · 4.6 GB</td></tr>
+        <tr><td><span class="sw" style="background:var(--s3)"></span>Needle 3</td><td>Cactus Compute, on-device tool-calling model</td><td>Same MacBook, CPU</td><td>121 M params · 35 MB</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Accuracy</th><th>Jev</th><th>Open-Jev-2B</th><th>Needle 3</th></tr></thead>
+      <tbody>
+        <tr><td>Ticket triage</td><td class="best">93.4%</td><td>88.4%</td><td>28.3%</td></tr>
+        <tr><td>Intent + out-of-scope</td><td class="best">91.0%</td><td>74.5%</td><td>20.0%</td></tr>
+        <tr><td>Toxicity guardrail</td><td class="best">78.5%</td><td>58.5%</td><td>32.0%</td></tr>
+        <tr><td>Tool selection</td><td class="best">99.5%</td><td class="best">99.5%</td><td>95.0%</td></tr>
+      </tbody>
+    </table></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Automatable at ≥95% precision</th><th>Jev</th><th>Open-Jev-2B</th><th>Needle 3</th></tr></thead>
+      <tbody>
+        <tr><td>Ticket triage</td><td class="best">98.0%</td><td>88.4%</td><td>1.0%</td></tr>
+        <tr><td>Intent + out-of-scope</td><td class="best">62.5%</td><td>43.5%</td><td>0.0%</td></tr>
+        <tr><td>Toxicity guardrail</td><td class="best">20.5%</td><td>1.5%</td><td>0.0%</td></tr>
+        <tr><td>Tool selection</td><td class="best">100%</td><td class="best">100%</td><td class="best">100%</td></tr>
+      </tbody>
+    </table></div>
+    <p class="caption">“Automatable” is the share of all cases a model could handle with no human review: take its most-confident answers first, and stop when accuracy on those would drop below 95%. This is the number that sets how much work can actually be taken off people.</p>
+    <p><a href="comparison.html">Interactive chart with every metric →</a></p>
+  </section>
+
+  <section>
+    <h2>Model by model</h2>
+    <div class="models">
+      <div class="model">
+        <header><h3><span class="sw" style="background:var(--s1)"></span>Jev</h3><span class="pill good">Recommended to pilot</span></header>
+        <ul>
+          <li><b>Most accurate on every use case</b>, and the only model whose confidence scores match reality closely (calibration error 0.006–0.073).</li>
+          <li><b>Out-of-scope handling is strong</b>: 84% of off-topic and near-miss requests correctly rejected, with 93% accuracy on the in-scope ones.</li>
+          <li><b>Toxicity is its weakest area</b>: 78.5% accuracy, with 77% precision and 82% recall on toxic comments. Only 20% of cases are safe to automate at 95% precision there, so a guardrail would still need human review or a second check.</li>
+          <li><b>Consideration:</b> data is sent to a third-party API. That needs a data-governance and vendor review before production use.</li>
+        </ul>
+      </div>
+      <div class="model">
+        <header><h3><span class="sw" style="background:var(--s2)"></span>Open-Jev-2B</h3><span class="pill warn">Self-hosted fallback · test at 9B</span></header>
+        <ul>
+          <li><b>Close to Jev on routing</b> (triage 88.4%, tool selection 99.5%), and it keeps all data in-house.</li>
+          <li><b>Weak at judgement:</b> on toxicity it flags cautiously, so 87% of its flags are right, but it catches only 20% of toxic comments. Intent accuracy drops to 74.5%.</li>
+          <li><b>Over- or under-confident</b> (calibration error ~0.25 on the classification use cases), so confidence thresholds would need tuning per use case.</li>
+          <li><b>Slow on a laptop:</b> 0.5–2.6 s per request, because the fast code it uses on NVIDIA GPUs isn't available on a Mac. The authors report ~85 ms on an H100.</li>
+          <li><b>The larger 9B model reports better accuracy</b> (97.5% vs 94.7% on its authors' held-out test). It needs a ~20 GB GPU, which a MacBook doesn't provide.</li>
+        </ul>
+      </div>
+      <div class="model">
+        <header><h3><span class="sw" style="background:var(--s3)"></span>Needle 3</h3><span class="pill bad">Not suited to classification</span></header>
+        <ul>
+          <li><b>Built for a different job</b>: picking and filling tool calls on phones and other small devices. On tool selection it chose the right function 95% of the time and got the arguments fully right 61% of the time.</li>
+          <li><b>Declined 28–55% of classification cases</b>, and its confidence was often 0.9–1.0 even on wrong answers. That makes confidence thresholds unreliable.</li>
+          <li><b>Very small and fast</b> (35 MB, 30–160 ms on CPU, works offline). Worth revisiting only for on-device agents that call tools.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Caveats</h2>
+    <ul class="plain muted">
+      <li><b>Public, not production, data.</b> Real tickets are messier and specific to our domain. These results show relative strength, not the accuracy we should expect in production.</li>
+      <li><b>One run of ~200 cases per use case.</b> Differences of 2–3 points are within noise. The large gaps (Jev vs Needle, and toxicity) are not.</li>
+      <li><b>Latency isn't like-for-like.</b> Jev's time includes the internet round trip, Open-Jev ran on a laptop GPU, and Needle on a CPU. Treat the speed numbers as indicative only.</li>
+      <li><b>Prompts were not tuned.</b> Every model got the same short instructions and category descriptions. Better descriptions would likely help all three, especially on toxicity.</li>
+      <li><b>Needle was used outside its design.</b> Each classification was given to it as a tool to call, which is the closest fit its interface allows.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Recommended next steps</h2>
+    <ol class="steps">
+      <li><b>Run the same test on our own data.</b> 200–300 anonymised, labelled cases from one real workflow (support routing is the best candidate). The harness takes them with no code changes.</li>
+      <li><b>Start a data-governance and vendor review for Jev</b>: data residency, retention, what's covered by the contract, and pricing at our volume.</li>
+      <li><b>Test Open-Jev-9B on a Linux machine with an NVIDIA GPU</b>, to see whether a self-hosted option can close the gap with Jev on intent and toxicity.</li>
+      <li><b>Tune the instructions for the toxicity guardrail</b>, and consider a second check (another model or a human) for mid-confidence cases.</li>
+      <li><b>Set confidence thresholds per workflow</b> from the tuned results, choosing the precision target the business owner will accept.</li>
+    </ol>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Reproducing the results</h2>
+    <p class="muted">Everything lives in <code>JEV/bench/</code>. Runs pick up where they left off and retry any failed cases. Results are written per case, so every number here can be traced back to a single prediction.</p>
+<pre>python build_datasets.py            # sample the four sets from public data
+./run_local.sh                      # Needle, then Open-Jev (starts/stops its server)
+python run.py --model jev           # needs TYPESAFE_API_KEY
+python report.py && python make_chart.py</pre>
+    <p class="foot">Metric definitions: accuracy counts declined answers as wrong. Calibration error is ECE over 10 bins, using the model's confidence in its chosen answer. Needle's tool arguments were scored against BFCL's accepted values.</p>
+  </section>
+
+</article>
+</div>
